@@ -3,18 +3,11 @@ const execProcess = require("./exec_process.js");
 const ObjectsToCsv = require("objects-to-csv");
 
 async function mainGit(repo, start_date, end_date) {
-  console.log("Dir ----------");
-  if (!fs.existsSync("./cloned-repo")) {
-    console.log("making cloned repo");
-    fs.mkdirSync(`./cloned-repo`);
-  }
-
-  console.log("checking if repo it already in folder");
-  let res = await execProcess.result(`git -C ./cloned-repo rev-parse`);
+  console.log("Checking if repo it already in folder");
+  let res = await execProcess.result(`git submodule add ${repo} cloned-repo`);
 
   if (res instanceof Error) {
-    console.log("cloning repo");
-    await execProcess.result(`git clone ${repo} ./cloned-repo`);
+    console.log("Git repo already in local folder");
   }
 
   console.log("Fetching repo");
