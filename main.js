@@ -3,7 +3,9 @@ const execProcess = require("./exec_process.js");
 const ObjectsToCsv = require("objects-to-csv");
 
 async function mainGit(repo, start_date, end_date) {
-  console.log("Checking if repo it already in folder");
+  console.log("Dir ----------");
+
+  console.log("checking if repo has already been cloned locally ");
   let res = await execProcess.result(`git submodule add ${repo} cloned-repo`);
 
   if (res instanceof Error) {
@@ -13,7 +15,7 @@ async function mainGit(repo, start_date, end_date) {
   console.log("Fetching repo");
   execProcess.result(`git -C ./cloned-repo fetch`);
 
-  // Get all of the authors  (git -C ./cloned-repo shortlog -sne HEAD)
+  // Get all of the authors  (git -C ./cloned_repo shortlog -sne HEAD)
   console.log("getting authors names");
   let allAuthorsGit = await execProcess.result(
     `git -C ./cloned-repo shortlog -sne HEAD`
@@ -86,11 +88,12 @@ async function mainGit(repo, start_date, end_date) {
   console.log("Final All Authors");
   console.log(allAuthorLogs);
 
-  console.log("making .csv");
+  console.log("Making .csv");
   const csv = new ObjectsToCsv(allAuthorLogs);
   await csv.toDisk("./authorStats.csv");
   //   console.log(await csv.toString());
-  console.log("making graph");
+  console.log("Making .js file");
+  fs.writeFileSync("./authorStats.js", `var csv = \`${await csv.toString()}\``);
 }
 
 mainGit(
