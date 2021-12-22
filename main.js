@@ -101,16 +101,3 @@ mainGit(
   process.argv.slice(3)[0],
   process.argv.slice(4)[0]
 );
-
-/**
- * 
- *  node main.js git@bitbucket.org:bump/reg-plugins-seating.git 2021-04-01T15:07:27+0000 2021-09-29T15:07:27+0000
- * 
- * create git-thing where git-thing can be invoked like: # git-thing git@github.com:bump/whatever 2020-01-01T00:00:00Z 2021-01-01T00:00:00Z 1D
-    and I get a CSV + a graph of the following per contributor:
-# of commits
-# of lines changed (optional, maybe not)
-# of lines added
-# of lines removed
-over the time between the dates broken down by the time slice (1D)
- * **/
