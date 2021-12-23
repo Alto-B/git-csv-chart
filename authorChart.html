@@ -11,12 +11,14 @@
   <body onload="">
     <script>
       async function makeChart(options) {
+        // Default values
         const graphWidth = 2300;
         const graphHeight = 800;
         const margin = { top: 80, bottom: 30, left: 90, right: 30 };
         const innerWidth = graphWidth - margin.left - margin.right;
         const innerHeight = graphHeight - margin.top - margin.bottom;
 
+        // Date multipler (i.e. range * multi, where range is day, month, or year in miliseconds)
         var multi = 2;
 
         const mouseTimeFormat = d3.timeFormat("%B %d, %Y");
@@ -125,7 +127,10 @@
           .data(sumStat)
           .enter()
           .append("g")
-          .attr("class", (auth) => String.raw`${auth.key} author`)
+          .attr(
+            "class",
+            (auth) => String.raw`${auth.key} author ${options.type}`
+          )
           .attr("opacity", "1");
 
         legend
@@ -164,6 +169,7 @@
           .attr("transform", "translate(0," + innerHeight + ")")
           .call(xAxis);
 
+        // Get the max value based off of buckets
         let yDomain = [];
         sumStat2.forEach((auth) => {
           auth.values.forEach((d) => {
@@ -187,8 +193,13 @@
         });
 
         // Y-Axis
-        const yScale = createY(yDomain, innerHeight, options.type);
+        const yScale = d3
+          .scalePow()
+          .exponent(0.5)
+          .domain([0, d3.max(yDomain, (d) => +d)])
+          .range([innerHeight, 0]);
         const yAxis = d3.axisLeft(yScale);
+
         // Add Y-Axis
         mainSVG.append("g").call(yAxis);
 
@@ -203,7 +214,7 @@
           .data(sumStat2)
           .enter()
           .append("path")
-          .attr("class", (auth) => String.raw`${auth.key} line`)
+          .attr("class", (auth) => String.raw`${auth.key} line ${options.type}`)
           .attr("d", function (auth) {
             return d3
               .line()
@@ -220,7 +231,10 @@
                         dd.date.getTime() > d.getTime() &&
                         dd.date.getTime() < bucketIntervals + d.getTime()
                     )
-                    .reduce((prev, current) => prev + parseInt(current.add), 0)
+                    .reduce(
+                      (prev, current) => prev + parseInt(current[options.type]),
+                      0
+                    )
                 );
               })
               .curve(d3.curveMonotoneX)(auth.values);
@@ -260,6 +274,7 @@
           .append("g")
           .attr("class", (auth) => String.raw`${auth.key} mouse-per-line`);
 
+        // Circles around the chart line
         mousePerLine
           .append("circle")
           .attr("class", (auth) => String.raw`${auth.key} circle`)
@@ -269,13 +284,13 @@
           .style("stroke-width", "1px")
           .style("opacity", "0");
 
+        // Value next to the circle
         mousePerLine
           .append("text")
           .attr("transform", "translate(10,3)")
           .attr("class", (auth) => String.raw`${auth.key} text`);
 
         // Mouse hovering for chart (shows the info for the lines depending on mouse position)
-
         mouseG
           .append("rect")
           .attr("id", "mouse-hover-area")
@@ -315,12 +330,15 @@
           })
           .on("mousemove", function (event) {
             var mouse = d3.pointer(event);
+
+            // Show/Move black line
             d3.select(".mouse-line").attr("d", function () {
               var d = "M" + mouse[0] + "," + innerHeight;
               d += " " + mouse[0] + "," + 0;
               return d;
             });
 
+            // Show/Movr date
             d3.select(".mouse-date")
               .attr("x", function () {
                 return mouse[0];
@@ -328,8 +346,8 @@
               .attr("y", innerHeight + 40)
               .text(mouseTimeFormat(xScale.invert(mouse[0])));
 
+            // Show/Move circle on author chart line
             d3.selectAll(".mouse-per-line").attr("transform", function (d, i) {
-              //console.log(innerWidth / mouse[0]);
               var xDate = xScale.invert(mouse[0]),
                 bisect = d3.bisector(function (d) {
                   return d.date;
@@ -365,10 +383,19 @@
         // Mouse click for legend
         d3.selectAll(".author").on("click", function (d) {
           let currentAuth = d3.select(this).attr("class").split(" ");
+
+          console.log(
+            d3.selectAll(
+              document.getElementsByClassName(
+                String.raw`${currentAuth[0]} line ${currentAuth[2]}`
+              )
+            )
+          );
+
           let currentLineOpacity = d3
             .selectAll(
               document.getElementsByClassName(
-                String.raw`${currentAuth[0]} line`
+                String.raw`${currentAuth[0]} line ${currentAuth[2]}`
               )
             )
             .style("opacity");
@@ -377,7 +404,9 @@
             .transition()
             .style("opacity", currentLineOpacity == 1 ? 0.2 : 1);
           d3.selectAll(
-            document.getElementsByClassName(String.raw`${currentAuth[0]} line`)
+            document.getElementsByClassName(
+              String.raw`${currentAuth[0]} line ${currentAuth[2]}`
+            )
           )
             .transition()
             .style("opacity", currentLineOpacity == 1 ? 0 : 1);
@@ -389,22 +418,6 @@
        *  Helper Functions
        * ========================================================================
        */
-
-      function createY(data, height, type) {
-        switch (type) {
-          case "add":
-            return d3
-              .scalePow()
-              .exponent(0.5)
-              .domain([0, d3.max(data, (d) => +d)])
-              .range([height, 0]);
-          case "remove":
-            return d3
-              .scaleSqrt()
-              .domain([0, d3.max(data, (d) => +d.remove)])
-              .range([height, 0]);
-        }
-      }
 
       // Recursivly make the "fake data" range. starting from the start point at 00:00:00
       function createBuckets(ary, startDate, endDate, bucketSizeMs) {
@@ -419,6 +432,7 @@
       }
 
       makeChart({ type: "add" });
+      makeChart({ type: "remove" });
     </script>
   </body>
 </html>
