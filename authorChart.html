@@ -272,12 +272,18 @@
           .data(sumStat)
           .enter()
           .append("g")
-          .attr("class", (auth) => String.raw`${auth.key} mouse-per-line`);
+          .attr(
+            "class",
+            (auth) => String.raw`${auth.key} mouse-per-line ${options.type}`
+          );
 
         // Circles around the chart line
         mousePerLine
           .append("circle")
-          .attr("class", (auth) => String.raw`${auth.key} circle`)
+          .attr(
+            "class",
+            (auth) => String.raw`${auth.key} circle ${options.type}`
+          )
           .attr("r", 7)
           .style("stroke", (d) => colors(d.key))
           .style("fill", "none")
@@ -288,7 +294,10 @@
         mousePerLine
           .append("text")
           .attr("transform", "translate(10,3)")
-          .attr("class", (auth) => String.raw`${auth.key} text`);
+          .attr(
+            "class",
+            (auth) => String.raw`${auth.key} text ${options.type}`
+          );
 
         // Mouse hovering for chart (shows the info for the lines depending on mouse position)
         mouseG
@@ -299,30 +308,46 @@
           .attr("fill", "none")
           .attr("pointer-events", "all")
           .on("mouseout", function () {
+            // Remove tools when mouse is out of chart
             d3.select(".mouse-line").style("opacity", "0");
             d3.select(".mouse-date").style("opacity", "0");
-            d3.selectAll(".mouse-per-line circle").style("opacity", "0");
-            d3.selectAll(".mouse-per-line text").style("opacity", "0");
-          })
-          .on("mouseover", function () {
-            d3.select(".mouse-line").style("opacity", "0.5");
-            d3.select(".mouse-date").style("opacity", "1");
 
-            let allMouseLines = d3.selectAll(".mouse-per-line");
-
-            // Show the circle and data only if the author is selected
+            // Remove the circle & text only if the author is selected (Look at the lines and see if they have been deselected)
             Array.from(lines).forEach((l) => {
               if (l.style.opacity == 1) {
                 let currentShowingAuthor = l.getAttribute("class").split(" ");
 
                 d3.selectAll(
                   document.getElementsByClassName(
-                    `${currentShowingAuthor[0]} circle`
+                    `${currentShowingAuthor[0]} circle ${currentShowingAuthor[2]}`
+                  )
+                ).style("opacity", "0");
+                d3.selectAll(
+                  document.getElementsByClassName(
+                    `${currentShowingAuthor[0]} text ${currentShowingAuthor[2]}`
+                  )
+                ).style("opacity", "0");
+              }
+            });
+          })
+          .on("mouseover", function () {
+            // Draw tools when mouse is in the chart
+            d3.select(".mouse-line").style("opacity", "0.5");
+            d3.select(".mouse-date").style("opacity", "1");
+
+            // Show the circle & text only if the author is selected (Look at the lines and see if they have been deselected)
+            Array.from(lines).forEach((l) => {
+              if (l.style.opacity == 1) {
+                let currentShowingAuthor = l.getAttribute("class").split(" ");
+
+                d3.selectAll(
+                  document.getElementsByClassName(
+                    `${currentShowingAuthor[0]} circle ${currentShowingAuthor[2]}`
                   )
                 ).style("opacity", "1");
                 d3.selectAll(
                   document.getElementsByClassName(
-                    `${currentShowingAuthor[0]} text`
+                    `${currentShowingAuthor[0]} text ${currentShowingAuthor[2]}`
                   )
                 ).style("opacity", "1");
               }
@@ -330,15 +355,14 @@
           })
           .on("mousemove", function (event) {
             var mouse = d3.pointer(event);
-
-            // Show/Move black line
-            d3.select(".mouse-line").attr("d", function () {
+            // Move black line
+            d3.selectAll(".mouse-line").attr("d", function () {
               var d = "M" + mouse[0] + "," + innerHeight;
               d += " " + mouse[0] + "," + 0;
               return d;
             });
 
-            // Show/Movr date
+            // Move date
             d3.select(".mouse-date")
               .attr("x", function () {
                 return mouse[0];
@@ -346,7 +370,7 @@
               .attr("y", innerHeight + 40)
               .text(mouseTimeFormat(xScale.invert(mouse[0])));
 
-            // Show/Move circle on author chart line
+            // Move circle on author chart line
             d3.selectAll(".mouse-per-line").attr("transform", function (d, i) {
               var xDate = xScale.invert(mouse[0]),
                 bisect = d3.bisector(function (d) {
@@ -383,14 +407,6 @@
         // Mouse click for legend
         d3.selectAll(".author").on("click", function (d) {
           let currentAuth = d3.select(this).attr("class").split(" ");
-
-          console.log(
-            d3.selectAll(
-              document.getElementsByClassName(
-                String.raw`${currentAuth[0]} line ${currentAuth[2]}`
-              )
-            )
-          );
 
           let currentLineOpacity = d3
             .selectAll(
