@@ -252,23 +252,28 @@
          * ========================================================================
          */
 
-        var mouseG = mainSVG.append("g").attr("class", "mouse-over-effect");
+        var mouseG = mainSVG
+          .append("g")
+          .attr("class", `mouse-over-effect ${options.type}`);
 
         // Black vertical bar
         mouseG
           .append("path")
-          .attr("class", "mouse-line")
+          .attr("class", `mouse-line ${options.type}`)
           .style("stroke", "black")
           .style("stroke-width", "1")
           .style("opacity", "0");
 
         // Date under line
-        mouseG.append("text").attr("class", "mouse-date").style("opacity", "0");
+        mouseG
+          .append("text")
+          .attr("class", `mouse-date ${options.type}`)
+          .style("opacity", "0");
 
         var lines = document.getElementsByClassName("line");
 
         var mousePerLine = mouseG
-          .selectAll(".mouse-per-line")
+          .selectAll(`.mouse-per-line ${options.type}`)
           .data(sumStat)
           .enter()
           .append("g")
@@ -290,7 +295,7 @@
           .style("stroke-width", "1px")
           .style("opacity", "0");
 
-        // Value next to the circle
+        // Data next to the circle
         mousePerLine
           .append("text")
           .attr("transform", "translate(10,3)")
@@ -302,15 +307,15 @@
         // Mouse hovering for chart (shows the info for the lines depending on mouse position)
         mouseG
           .append("rect")
-          .attr("id", "mouse-hover-area")
+          .attr("id", `mouse-hover-area ${options.type}`)
           .attr("width", innerWidth)
           .attr("height", innerHeight)
           .attr("fill", "none")
           .attr("pointer-events", "all")
           .on("mouseout", function () {
             // Remove tools when mouse is out of chart
-            d3.select(".mouse-line").style("opacity", "0");
-            d3.select(".mouse-date").style("opacity", "0");
+            d3.select(`.mouse-line.${options.type}`).style("opacity", "0");
+            d3.select(`.mouse-date.${options.type}`).style("opacity", "0");
 
             // Remove the circle & text only if the author is selected (Look at the lines and see if they have been deselected)
             Array.from(lines).forEach((l) => {
@@ -332,8 +337,10 @@
           })
           .on("mouseover", function () {
             // Draw tools when mouse is in the chart
-            d3.select(".mouse-line").style("opacity", "0.5");
-            d3.select(".mouse-date").style("opacity", "1");
+            d3.select(`.mouse-line.${options.type}`).style("opacity", "0.5");
+            d3.select(`.mouse-date.${options.type}`).style("opacity", "1");
+
+            console.log(d3.select(`.mouse-line.${options.type}`));
 
             // Show the circle & text only if the author is selected (Look at the lines and see if they have been deselected)
             Array.from(lines).forEach((l) => {
@@ -356,14 +363,14 @@
           .on("mousemove", function (event) {
             var mouse = d3.pointer(event);
             // Move black line
-            d3.selectAll(".mouse-line").attr("d", function () {
+            d3.select(`.mouse-line.${options.type}`).attr("d", function () {
               var d = "M" + mouse[0] + "," + innerHeight;
               d += " " + mouse[0] + "," + 0;
               return d;
             });
 
             // Move date
-            d3.select(".mouse-date")
+            d3.select(`.mouse-date.${options.type}`)
               .attr("x", function () {
                 return mouse[0];
               })
@@ -371,37 +378,40 @@
               .text(mouseTimeFormat(xScale.invert(mouse[0])));
 
             // Move circle on author chart line
-            d3.selectAll(".mouse-per-line").attr("transform", function (d, i) {
-              var xDate = xScale.invert(mouse[0]),
-                bisect = d3.bisector(function (d) {
-                  return d.date;
-                }).right;
-              idx = bisect(d.value, xDate);
+            d3.selectAll(`.mouse-per-line.${options.type}`).attr(
+              "transform",
+              function (d, i) {
+                var xDate = xScale.invert(mouse[0]),
+                  bisect = d3.bisector(function (d) {
+                    return d.date;
+                  }).right;
+                idx = bisect(d.value, xDate);
 
-              var beginning = 0,
-                end = lines[i].getTotalLength(),
-                target = null;
+                var beginning = 0,
+                  end = lines[i].getTotalLength(),
+                  target = null;
 
-              while (true) {
-                target = Math.floor((beginning + end) / 2);
-                pos = lines[i].getPointAtLength(target);
-                if (
-                  (target === end || target === beginning) &&
-                  pos.x !== mouse[0]
-                ) {
-                  break;
+                while (true) {
+                  target = Math.floor((beginning + end) / 2);
+                  pos = lines[i].getPointAtLength(target);
+                  if (
+                    (target === end || target === beginning) &&
+                    pos.x !== mouse[0]
+                  ) {
+                    break;
+                  }
+                  if (pos.x > mouse[0]) end = target;
+                  else if (pos.x < mouse[0]) beginning = target;
+                  else break; //position found
                 }
-                if (pos.x > mouse[0]) end = target;
-                else if (pos.x < mouse[0]) beginning = target;
-                else break; //position found
+
+                d3.select(this)
+                  .select("text")
+                  .text(yScale.invert(pos.y).toFixed(0));
+
+                return "translate(" + mouse[0] + "," + pos.y + ")";
               }
-
-              d3.select(this)
-                .select("text")
-                .text(yScale.invert(pos.y).toFixed(0));
-
-              return "translate(" + mouse[0] + "," + pos.y + ")";
-            });
+            );
           });
 
         // Mouse click for legend
