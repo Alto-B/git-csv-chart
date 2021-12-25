@@ -1,3 +1,6 @@
+# Git-CSV-Chart
+Able to make a .CSV file or a times series multi line chart of a git repository, of author lines of code added, removed, or commits within a time range 
+
 # Commands to run Program
 
 1. `npm i`
