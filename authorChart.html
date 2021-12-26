@@ -173,7 +173,6 @@
         let yDomain = [];
         sumStat2.forEach((auth) => {
           auth.values.forEach((d) => {
-            //console.log(sumStat.filter((data) => data.key == auth.key));
             let total = sumStat
               .filter((data) => data.key == auth.key)[0]
               .value.filter((dd) => {
@@ -282,7 +281,6 @@
             (auth) => String.raw`${auth.key} mouse-per-line ${options.type}`
           );
 
-        console.log(mousePerLine);
         // Circles around the chart line
         mousePerLine
           .append("circle")
@@ -342,8 +340,6 @@
             // Draw tools when mouse is in the chart
             d3.select(`.mouse-line.${options.type}`).style("opacity", "0.5");
             d3.select(`.mouse-date.${options.type}`).style("opacity", "1");
-
-            console.log(d3.selectAll(`.mouse-per-line.${options.type}`));
 
             // Show the circle & text only if the author is selected (Look at the lines and see if they have been deselected)
             Array.from(
