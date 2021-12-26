@@ -282,6 +282,7 @@
             (auth) => String.raw`${auth.key} mouse-per-line ${options.type}`
           );
 
+        console.log(mousePerLine);
         // Circles around the chart line
         mousePerLine
           .append("circle")
@@ -318,7 +319,9 @@
             d3.select(`.mouse-date.${options.type}`).style("opacity", "0");
 
             // Remove the circle & text only if the author is selected (Look at the lines and see if they have been deselected)
-            Array.from(lines).forEach((l) => {
+            Array.from(
+              document.getElementsByClassName(`line ${options.type}`)
+            ).forEach((l) => {
               if (l.style.opacity == 1) {
                 let currentShowingAuthor = l.getAttribute("class").split(" ");
 
@@ -340,10 +343,12 @@
             d3.select(`.mouse-line.${options.type}`).style("opacity", "0.5");
             d3.select(`.mouse-date.${options.type}`).style("opacity", "1");
 
-            console.log(d3.select(`.mouse-line.${options.type}`));
+            console.log(d3.selectAll(`.mouse-per-line.${options.type}`));
 
             // Show the circle & text only if the author is selected (Look at the lines and see if they have been deselected)
-            Array.from(lines).forEach((l) => {
+            Array.from(
+              document.getElementsByClassName(`line ${options.type}`)
+            ).forEach((l) => {
               if (l.style.opacity == 1) {
                 let currentShowingAuthor = l.getAttribute("class").split(" ");
 
@@ -388,12 +393,16 @@
                 idx = bisect(d.value, xDate);
 
                 var beginning = 0,
-                  end = lines[i].getTotalLength(),
+                  end = Array.from(
+                    document.getElementsByClassName(`line ${options.type}`)
+                  )[i].getTotalLength(),
                   target = null;
 
                 while (true) {
                   target = Math.floor((beginning + end) / 2);
-                  pos = lines[i].getPointAtLength(target);
+                  pos = Array.from(
+                    document.getElementsByClassName(`line ${options.type}`)
+                  )[i].getPointAtLength(target);
                   if (
                     (target === end || target === beginning) &&
                     pos.x !== mouse[0]
